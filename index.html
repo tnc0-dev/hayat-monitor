@@ -46,6 +46,7 @@ const TH={
   finans:{ac:"#22c55e",bg:"rgba(34,197,94,0.08)",bd:"rgba(34,197,94,0.2)"},
   eventler:{ac:"#f59e0b",bg:"rgba(245,158,11,0.08)",bd:"rgba(245,158,11,0.2)"},
   icerikler:{ac:"#8b5cf6",bg:"rgba(139,92,246,0.08)",bd:"rgba(139,92,246,0.2)"},
+  goals:{ac:"#14b8a6",bg:"rgba(20,184,166,0.08)",bd:"rgba(20,184,166,0.2)"},
 };
 
 const inp={width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 16px",color:"#fff",fontSize:14,outline:"none",boxSizing:"border-box"};
@@ -433,12 +434,84 @@ function IceriklerTab(){
 }
 
 /* ═══════════════════════════════════════════
+   GOALS
+   ═══════════════════════════════════════════ */
+function GoalsTab(){
+  const t=TH.goals;
+  const [goals,setGoals]=useState(()=>ld("gl",[]));
+  const [input,setInput]=useState("");
+  const [showAdd,setShowAdd]=useState(false);
+
+  useEffect(()=>{sv("gl",goals)},[goals]);
+
+  const addGoal=()=>{
+    if(!input.trim()) return;
+    setGoals(p=>[...p,{id:uid(),title:input.trim(),done:false,addedAt:td(),doneAt:null}]);
+    setInput("");setShowAdd(false);
+  };
+  const toggleDone=id=>setGoals(p=>p.map(g=>g.id===id?{...g,done:!g.done,doneAt:!g.done?td():null}:g));
+  const removeGoal=id=>setGoals(p=>p.filter(g=>g.id!==id));
+
+  const active=goals.filter(g=>!g.done);
+  const done=goals.filter(g=>g.done);
+  const progress=goals.length>0?Math.round((done.length/goals.length)*100):0;
+
+  return <div style={{padding:20,maxWidth:600,margin:"0 auto"}} className="fade-up">
+    {/* İlerleme */}
+    {goals.length>0&&<div style={{background:"linear-gradient(135deg,rgba(20,184,166,0.12),rgba(20,184,166,0.04))",border:"1px solid "+t.bd,borderRadius:14,padding:24,textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:48,fontWeight:800,color:t.ac,fontFamily:"'Courier New',monospace"}}>{progress}%</div>
+      <div style={{fontSize:13,color:"#888",marginTop:4}}>{done.length} / {goals.length} hedef tamamlandı</div>
+      <div style={{height:8,borderRadius:4,background:"rgba(255,255,255,0.05)",overflow:"hidden",marginTop:14}}>
+        <div style={{height:"100%",borderRadius:4,background:t.ac,width:progress+"%",transition:"width .5s ease"}}/>
+      </div>
+    </div>}
+
+    {/* Ekle */}
+    {!showAdd&&<button onClick={()=>setShowAdd(true)} style={{width:"100%",padding:14,borderRadius:12,border:"1px dashed "+t.bd,background:t.bg,color:t.ac,fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:24}}><IPlus/> Yeni Hedef Ekle</button>}
+
+    {showAdd&&<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid "+t.bd,borderRadius:14,padding:20,marginBottom:24}} className="fade-up">
+      <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Hedefini yaz..." onKeyDown={e=>e.key==="Enter"&&addGoal()} style={{...inp,marginBottom:12}} autoFocus/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={addGoal} style={{flex:1,padding:12,borderRadius:10,border:"none",background:t.ac,color:"#000",fontWeight:700,fontSize:14,cursor:"pointer"}}>Ekle</button>
+        <button onClick={()=>setShowAdd(false)} style={{padding:"12px 20px",borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",background:"none",color:"#888",fontSize:14,cursor:"pointer"}}>İptal</button>
+      </div>
+    </div>}
+
+    {/* Aktif Hedefler */}
+    <div style={{fontSize:13,fontWeight:700,color:"#bbb",marginBottom:10,textTransform:"uppercase",letterSpacing:1}}>Aktif Hedefler</div>
+    {active.length===0?<div style={{color:"#444",fontSize:13,padding:"12px 0",marginBottom:20}}>Henüz hedef yok</div>
+    :active.map(g=><div key={g.id} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",marginBottom:8,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <button onClick={()=>toggleDone(g.id)} style={{width:28,height:28,borderRadius:8,border:"2px solid "+t.bd,background:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:t.ac}}/>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{color:"#ddd",fontSize:14,fontWeight:500}}>{g.title}</div>
+        <div style={{fontSize:11,color:"#555",marginTop:2}}>Eklendi: {new Date(g.addedAt).toLocaleDateString("tr-TR")}</div>
+      </div>
+      <button onClick={()=>removeGoal(g.id)} style={{background:"none",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex",flexShrink:0}}><ITrash/></button>
+    </div>)}
+
+    {/* Tamamlanan */}
+    {done.length>0&&<>
+      <div style={{fontSize:13,fontWeight:700,color:"#555",marginBottom:10,marginTop:24,textTransform:"uppercase",letterSpacing:1}}>Tamamlanan Hedefler</div>
+      {done.map(g=><div key={g.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",marginBottom:6,borderRadius:12,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.04)",opacity:.6}}>
+        <div style={{width:28,height:28,borderRadius:8,background:t.ac,display:"flex",alignItems:"center",justifyContent:"center",color:"#000"}}><ICheck/></div>
+        <div style={{flex:1}}>
+          <div style={{color:"#888",fontSize:14,textDecoration:"line-through"}}>{g.title}</div>
+          <div style={{fontSize:11,color:"#555"}}>Tamamlandı: {g.doneAt?new Date(g.doneAt).toLocaleDateString("tr-TR"):""}</div>
+        </div>
+        <button onClick={()=>removeGoal(g.id)} style={{background:"none",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"}}><ITrash/></button>
+      </div>)}
+    </>}
+  </div>;
+}
+
+/* ═══════════════════════════════════════════
    ANA UYGULAMA
    ═══════════════════════════════════════════ */
 const TABS=[
   {key:"finans",label:"Finans",emoji:"💰"},
   {key:"eventler",label:"Eventler",emoji:"📅"},
   {key:"icerikler",label:"İçerikler",emoji:"📚"},
+  {key:"goals",label:"Goals",emoji:"🎯"},
 ];
 
 function App(){
@@ -466,6 +539,7 @@ function App(){
       {tab==="finans"&&<FinansTab/>}
       {tab==="eventler"&&<EventlerTab/>}
       {tab==="icerikler"&&<IceriklerTab/>}
+      {tab==="goals"&&<GoalsTab/>}
     </div>
   </div>;
 }
